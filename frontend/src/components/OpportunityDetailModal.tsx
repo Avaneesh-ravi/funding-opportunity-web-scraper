@@ -44,7 +44,7 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
       aria-modal="true"
       aria-labelledby="modal-opp-title"
     >
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-4xl w-full max-h-[94vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-4xl w-[calc(100vw-24px)] sm:w-full max-h-[94vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
         
         {/* Modal Header */}
         <div className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50/80 flex items-start justify-between gap-3">

@@ -180,7 +180,7 @@ export function App() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 relative overflow-x-hidden">
+    <div className="flex min-h-screen bg-slate-50 relative">
       
       {/* Sidebar Navigation (Desktop permanent / Mobile drawer) */}
       <Sidebar
@@ -191,7 +191,7 @@ export function App() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-0 w-full">
         
         <Header
           title={getPageTitle()}
@@ -206,20 +206,20 @@ export function App() {
 
         {/* Toast Notification Alert */}
         {toast && (
-          <div className="px-3.5 sm:px-6 pt-3 sm:pt-4">
+          <div className="px-3 sm:px-6 pt-3 sm:pt-4">
             <div className={`p-3 rounded-xl border flex items-center justify-between text-xs font-semibold shadow-xs ${
               toast.type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'
             }`}>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 {toast.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />}
                 <span className="break-words">{toast.message}</span>
               </div>
-              <button onClick={() => setToast(null)} className="text-slate-400 hover:text-slate-600 ml-2" aria-label="Dismiss message">✕</button>
+              <button onClick={() => setToast(null)} className="text-slate-400 hover:text-slate-600 ml-2 shrink-0" aria-label="Dismiss message">✕</button>
             </div>
           </div>
         )}
 
-        <main className="p-3.5 sm:p-5 md:p-6 flex-1 overflow-y-auto">
+        <main className="p-3 sm:p-5 md:p-6 flex-1 min-w-0">
           {currentTab === 'dashboard' && (
             <Dashboard
               websites={websites}

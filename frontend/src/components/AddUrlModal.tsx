@@ -89,7 +89,7 @@ export const AddUrlModal: React.FC<AddUrlModalProps> = ({ isOpen, onClose, onSub
       aria-modal="true"
       aria-labelledby="modal-add-url-title"
     >
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-[calc(100vw-24px)] sm:w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
         
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">

@@ -114,8 +114,8 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
           sorted.map((opp, index) => (
             <div key={opp.id} className="p-3.5 sm:p-4 space-y-3 hover:bg-slate-50/70 transition-colors">
               {/* Header: Agency & Status Badge */}
-              <div className="flex items-start justify-between gap-2">
-                <span className="inline-block text-[11px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200 max-w-[65%] truncate">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <span className="inline-block text-[11px] font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-md border border-sky-200 break-words">
                   {opp.funding_agency}
                 </span>
                 <StatusBadge status={opp.deadline_status} />
@@ -125,12 +125,12 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
               <div>
                 <h4
                   onClick={() => onViewDetails(opp)}
-                  className="font-bold text-slate-900 text-sm leading-snug cursor-pointer hover:text-sky-600 transition-colors line-clamp-2"
+                  className="font-bold text-slate-900 text-sm leading-snug cursor-pointer hover:text-sky-600 transition-colors break-words"
                 >
                   {opp.title}
                 </h4>
                 {opp.scheme_name && (
-                  <p className="text-xs text-sky-600 font-medium mt-0.5 line-clamp-1">{opp.scheme_name}</p>
+                  <p className="text-xs text-sky-600 font-medium mt-1 break-words">{opp.scheme_name}</p>
                 )}
               </div>
 
@@ -147,7 +147,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
               </div>
 
               {/* Footer: Timestamp and Action Buttons */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
                 <span className="text-[10px] text-slate-400 font-mono">
                   Checked: {formatDate(opp.last_verified_at)}
                 </span>
@@ -155,7 +155,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                 <div className="flex items-center gap-1.5 ml-auto">
                   <button
                     onClick={() => onViewDetails(opp)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs font-semibold border border-sky-200 transition-colors"
+                    className="min-h-[38px] inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs font-semibold border border-sky-200 transition-colors"
                     title="View Full Details"
                   >
                     <Eye className="w-3.5 h-3.5" />
@@ -166,7 +166,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                     href={opp.source_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors"
+                    className="min-w-[38px] min-h-[38px] flex items-center justify-center p-2 rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors"
                     title="Open Source Portal"
                     aria-label="Open Source Portal"
                   >
@@ -178,7 +178,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
                       href={opp.document_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="p-1.5 rounded-lg text-indigo-600 hover:bg-indigo-50 border border-indigo-200 transition-colors"
+                      className="min-w-[38px] min-h-[38px] flex items-center justify-center p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 border border-indigo-200 transition-colors"
                       title="View PDF Document"
                       aria-label="View PDF Document"
                     >
@@ -188,7 +188,7 @@ export const OpportunityTable: React.FC<OpportunityTableProps> = ({
 
                   <button
                     onClick={() => onRefresh(opp)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 border border-slate-200 transition-colors"
+                    className="min-w-[38px] min-h-[38px] flex items-center justify-center p-2 rounded-lg text-slate-500 hover:bg-slate-100 border border-slate-200 transition-colors"
                     title="Re-scrape Opportunity"
                     aria-label="Re-scrape Opportunity"
                   >
