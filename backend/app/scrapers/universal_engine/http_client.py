@@ -3,10 +3,15 @@ import time
 from typing import Optional, Tuple, Dict, Any
 from urllib.parse import urlparse, urljoin
 import urllib.robotparser
+import ssl
+import urllib3
 import requests
+from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
 from app.services.security_service import validate_url_security
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +76,23 @@ class SafeResponse:
         )
 
 
+class GovernmentPortalTLSAdapter(HTTPAdapter):
+    """
+    Ensures maximum compatibility with Indian government and legacy academic portals
+    that use internal CAs (NIC/CCA), older TLS cipher suites, or reject modern TLS 1.3 ClientHellos.
+    """
+    def init_poolmanager(self, *args, **kwargs):
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        try:
+            ctx.set_ciphers("DEFAULT@SECLEVEL=1")
+        except Exception:
+            pass
+        kwargs["ssl_context"] = ctx
+        return super().init_poolmanager(*args, **kwargs)
+
+
 class SafeHttpClient:
     """
     HTTP client with rigorous SSRF protection on initial request and every redirect hop,
@@ -79,8 +101,15 @@ class SafeHttpClient:
 
     def __init__(self, user_agent: Optional[str] = None):
         self.user_agent = user_agent or DEFAULT_USER_AGENT
-        self.session = requests.Session()
+        self.session = self._create_session()
         self._robots_cache: Dict[str, urllib.robotparser.RobotFileParser] = {}
+
+    def _create_session(self) -> requests.Session:
+        s = requests.Session()
+        adapter = GovernmentPortalTLSAdapter()
+        s.mount("https://", adapter)
+        s.mount("http://", HTTPAdapter())
+        return s
 
     def is_allowed_by_robots(self, target_url: str) -> bool:
         """
@@ -172,7 +201,8 @@ class SafeHttpClient:
                         headers=request_headers,
                         timeout=(DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT),
                         stream=True,
-                        allow_redirects=False
+                        allow_redirects=False,
+                        verify=False
                     )
 
                     # Check for redirects
@@ -223,7 +253,7 @@ class SafeHttpClient:
 
                 except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, Exception) as e:
                     # Reset session to purge tainted sockets on connection resets
-                    self.session = requests.Session()
+                    self.session = self._create_session()
                     if attempt < max_retries:
                         backoff = (2 ** attempt) + 0.5
                         logger.warning("Transient error connecting to %s: %s; retrying in %.1fs...", current_url, e, backoff)
