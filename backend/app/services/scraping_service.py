@@ -23,7 +23,17 @@ def execute_website_scrape(db: Session, website_id: int, reference_now: datetime
 
     tz = pytz.timezone(settings.TIMEZONE)
     now_utc = datetime.utcnow()
-    
+
+    # Clean up any stale RUNNING runs for this website (from aborted processes/crashes)
+    stale_runs = db.query(ScrapeRun).filter(
+        ScrapeRun.website_id == website.id,
+        ScrapeRun.status == "RUNNING"
+    ).all()
+    for s_run in stale_runs:
+        s_run.status = "FAILED"
+        s_run.finished_at = now_utc
+        s_run.error_message = "Previous run timed out or was terminated."
+
     scrape_run = ScrapeRun(
         website_id=website.id,
         started_at=now_utc,

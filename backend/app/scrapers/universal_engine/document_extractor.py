@@ -26,7 +26,7 @@ def extract_pdf_data(pdf_url: str, http_client: SafeHttpClient) -> Optional[Dict
     Extracts text, deadlines, announcement dates, and grant amounts.
     """
     try:
-        res = http_client.fetch(pdf_url, max_size=MAX_PDF_SIZE_BYTES)
+        res = http_client.fetch(pdf_url, max_size=MAX_PDF_SIZE_BYTES, max_retries=0)
         if not res.content or len(res.content) < 100:
             return None
 

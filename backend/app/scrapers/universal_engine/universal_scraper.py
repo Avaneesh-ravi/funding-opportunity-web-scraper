@@ -166,7 +166,7 @@ class UniversalScraper(BaseScraper):
             child_links = discover_relevant_links(soup, url, max_links=4)
             for child_url, anchor_text in child_links:
                 try:
-                    c_res = self.http_client.fetch(child_url)
+                    c_res = self.http_client.fetch(child_url, max_retries=0)
                     if c_res.is_pdf:
                         pdf_data = extract_pdf_data(child_url, self.http_client)
                         if pdf_data:

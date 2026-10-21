@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 MAX_HTML_SIZE_BYTES = 15 * 1024 * 1024   # 15 MB
 MAX_PDF_SIZE_BYTES = 25 * 1024 * 1024    # 25 MB
 MAX_REDIRECTS = 5
-DEFAULT_CONNECT_TIMEOUT = 10
-DEFAULT_READ_TIMEOUT = 20
+DEFAULT_CONNECT_TIMEOUT = 5
+DEFAULT_READ_TIMEOUT = 10
 DEFAULT_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -127,7 +127,7 @@ class SafeHttpClient:
         method: str = "GET",
         headers: Optional[Dict[str, str]] = None,
         max_size: int = MAX_HTML_SIZE_BYTES,
-        max_retries: int = 2,
+        max_retries: int = 1,
         check_robots: bool = False
     ) -> SafeResponse:
         """
