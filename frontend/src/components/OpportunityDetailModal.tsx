@@ -29,34 +29,50 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
     }
   };
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
+    <div
+      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-opp-title"
+    >
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-4xl w-full max-h-[94vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
         
         {/* Modal Header */}
-        <div className="p-6 border-b border-slate-200 bg-slate-50/80 flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-bold text-sky-600 uppercase tracking-wider">
+        <div className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50/80 flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <span className="text-[11px] sm:text-xs font-bold text-sky-700 bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-md uppercase tracking-wider truncate">
                 {opportunity.funding_agency}
               </span>
               <StatusBadge status={opportunity.deadline_status} />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 tracking-tight">{opportunity.title}</h3>
+            <h3 id="modal-opp-title" className="text-base sm:text-xl font-bold text-slate-900 tracking-tight break-words">
+              {opportunity.title}
+            </h3>
             {opportunity.scheme_name && (
-              <p className="text-xs text-slate-500 mt-1">Scheme / Call: {opportunity.scheme_name}</p>
+              <p className="text-xs text-slate-500 mt-1 break-words">Scheme / Call: {opportunity.scheme_name}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/50 transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/50 transition-colors shrink-0"
+            aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Modal Body - 2 Column Layout */}
-        <div className="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-slate-700">
+        {/* Modal Body - 2 Column Layout on md+ */}
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-sm text-slate-700">
           
           {/* Main Info Column (2 cols wide on desktop) */}
           <div className="md:col-span-2 space-y-6">

@@ -20,27 +20,27 @@ export const ExportPage: React.FC<ExportPageProps> = ({ opportunities }) => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         
         {/* CSV Export Box */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        <div className="bg-white p-5 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-200 shadow-xs space-y-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-emerald-100 text-emerald-700 rounded-xl">
-              <FileText className="w-6 h-6" />
+            <div className="p-2.5 sm:p-3 bg-emerald-100 text-emerald-700 rounded-xl shrink-0">
+              <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 text-lg">CSV Format (.csv)</h4>
+              <h4 className="font-bold text-slate-900 text-base sm:text-lg">CSV Format (.csv)</h4>
               <p className="text-xs text-slate-500">Standard UTF-8 comma separated spreadsheet file</p>
             </div>
           </div>
 
           <ul className="text-xs text-slate-600 space-y-1.5 pt-2 border-t border-slate-100">
             <li className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Includes Agency, Title, Dates, Document URLs, & Status</span>
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>Compatible with Python, R, Excel, Google Sheets</span>
             </li>
           </ul>
@@ -48,32 +48,32 @@ export const ExportPage: React.FC<ExportPageProps> = ({ opportunities }) => {
           <a
             href={getExportUrl('csv')}
             download
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-colors shadow-sm shadow-emerald-600/20"
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm transition-colors shadow-sm shadow-emerald-600/20"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4 shrink-0" />
             <span>Download CSV ({opportunities.length} Records)</span>
           </a>
         </div>
 
         {/* Excel Export Box */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        <div className="bg-white p-5 sm:p-6 rounded-xl sm:rounded-2xl border border-slate-200 shadow-xs space-y-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-sky-100 text-sky-700 rounded-xl">
-              <FileSpreadsheet className="w-6 h-6" />
+            <div className="p-2.5 sm:p-3 bg-sky-100 text-sky-700 rounded-xl shrink-0">
+              <FileSpreadsheet className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h4 className="font-bold text-slate-900 text-lg">Excel Workbook (.xlsx)</h4>
+              <h4 className="font-bold text-slate-900 text-base sm:text-lg">Excel Workbook (.xlsx)</h4>
               <p className="text-xs text-slate-500">Formatted OpenPyXL Microsoft Excel spreadsheet</p>
             </div>
           </div>
 
           <ul className="text-xs text-slate-600 space-y-1.5 pt-2 border-t border-slate-100">
             <li className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-sky-600" />
+              <CheckCircle2 className="w-4 h-4 text-sky-600 shrink-0" />
               <span>Structured worksheet tab: 'Funding Opportunities'</span>
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-sky-600" />
+              <CheckCircle2 className="w-4 h-4 text-sky-600 shrink-0" />
               <span>Full eligibility and submission URL columns included</span>
             </li>
           </ul>
@@ -81,9 +81,9 @@ export const ExportPage: React.FC<ExportPageProps> = ({ opportunities }) => {
           <a
             href={getExportUrl('excel')}
             download
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm transition-colors shadow-sm shadow-sky-600/20"
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs sm:text-sm transition-colors shadow-sm shadow-sky-600/20"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4 shrink-0" />
             <span>Download Excel WorkBook (.xlsx)</span>
           </a>
         </div>

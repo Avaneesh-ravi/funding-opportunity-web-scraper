@@ -80,27 +80,27 @@ export const StatCards: React.FC<StatCardsProps> = ({ websites, opportunities, s
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
       {stats.map((stat, idx) => {
         const Icon = stat.icon;
         return (
           <div
             key={idx}
-            className={`p-4 rounded-xl border bg-white shadow-xs flex flex-col justify-between transition-all hover:shadow-md ${stat.border}`}
+            className={`p-3.5 sm:p-4 rounded-xl border bg-white shadow-xs flex flex-col justify-between transition-all hover:shadow-md ${stat.border}`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider leading-snug">
                 {stat.label}
               </span>
-              <div className={`p-2 rounded-lg ${stat.bg} ${stat.color}`}>
+              <div className={`p-1.5 sm:p-2 rounded-lg ${stat.bg} ${stat.color} shrink-0`}>
                 <Icon className="w-4 h-4" />
               </div>
             </div>
 
-            <div className="mt-3">
+            <div className="mt-2.5 sm:mt-3">
               <span
                 className={`font-bold text-slate-900 tracking-tight ${
-                  stat.isText ? 'text-sm text-slate-700 block line-clamp-2' : 'text-2xl'
+                  stat.isText ? 'text-xs sm:text-sm text-slate-700 block break-words leading-tight' : 'text-xl sm:text-2xl'
                 }`}
               >
                 {stat.value}

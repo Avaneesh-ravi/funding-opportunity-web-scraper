@@ -34,32 +34,32 @@ export const Dashboard: React.FC<DashboardProps> = ({
     <div className="space-y-6">
       
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-sky-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <span className="inline-block px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-xs font-semibold uppercase tracking-wider mb-2">
+      <div className="bg-gradient-to-r from-sky-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-4 sm:p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <span className="inline-block px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-2">
             BRNS Funding Opportunity Tracker
           </span>
-          <h2 className="text-2xl font-bold tracking-tight">Active Research Grant Solicitations</h2>
-          <p className="text-sm text-slate-300 max-w-2xl mt-1">
+          <h2 className="text-lg sm:text-2xl font-bold tracking-tight">Active Research Grant Solicitations</h2>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mt-1 leading-relaxed">
             Real-time scraping engine monitoring official Board of Research in Nuclear Sciences (BRNS) project calls and document announcements.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">
           <button
             onClick={() => onNavigate('export')}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors border border-white/20"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors border border-white/20"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+            <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>Export Data</span>
           </button>
 
           <button
             onClick={() => onNavigate('opportunities')}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs transition-colors shadow-sm"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs transition-colors shadow-sm"
           >
             <span>All Solicitations</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 shrink-0" />
           </button>
         </div>
       </div>

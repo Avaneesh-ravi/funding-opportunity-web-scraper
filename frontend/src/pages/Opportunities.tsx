@@ -21,8 +21,8 @@ export const Opportunities: React.FC<OpportunitiesProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Award className="w-5 h-5 text-sky-600" />
-            Funding Opportunities Catalogue
+            <Award className="w-5 h-5 text-sky-600 shrink-0" />
+            <span>Funding Opportunities Catalogue</span>
           </h3>
           <p className="text-xs text-slate-500">
             Browse, search, filter by deadline status, and inspect extracted detail documents.

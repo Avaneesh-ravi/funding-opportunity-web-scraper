@@ -89,9 +89,9 @@ export const ActivityPanel: React.FC<ActivityPanelProps> = ({
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
       
       {/* Header */}
-      <div className="p-4 border-b border-slate-200 bg-slate-50/60 flex items-center justify-between">
+      <div className="p-3.5 sm:p-4 border-b border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-sky-100 text-sky-700 rounded-lg">
+          <div className="p-2 bg-sky-100 text-sky-700 rounded-lg shrink-0">
             <Bell className="w-4 h-4" />
           </div>
           <div>
@@ -103,7 +103,7 @@ export const ActivityPanel: React.FC<ActivityPanelProps> = ({
         {unreadCount > 0 && (
           <button
             onClick={onMarkAllRead}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition-colors self-start sm:self-auto"
           >
             <CheckCheck className="w-3.5 h-3.5" />
             <span>Mark All as Read ({unreadCount})</span>
@@ -124,7 +124,7 @@ export const ActivityPanel: React.FC<ActivityPanelProps> = ({
             return (
               <div
                 key={act.id}
-                className={`p-3.5 flex items-start gap-3 transition-colors ${
+                className={`p-3 sm:p-3.5 flex items-start gap-2.5 sm:gap-3 transition-colors ${
                   act.is_read ? 'bg-white' : 'bg-sky-50/40 font-medium'
                 }`}
               >
@@ -133,7 +133,7 @@ export const ActivityPanel: React.FC<ActivityPanelProps> = ({
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
                     <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded-md uppercase border ${badge.color}`}>
                       {badge.label}
                     </span>
@@ -143,14 +143,14 @@ export const ActivityPanel: React.FC<ActivityPanelProps> = ({
                   </div>
 
                   <h4 className="text-xs font-bold text-slate-900 mt-1 line-clamp-1">{act.title}</h4>
-                  <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{act.message}</p>
+                  <p className="text-xs text-slate-600 mt-0.5 leading-relaxed break-words">{act.message}</p>
                 </div>
 
                 {!act.is_read && (
                   <button
                     onClick={() => onMarkRead(act.id)}
                     title="Mark as read"
-                    className="shrink-0 text-xs text-sky-600 hover:text-sky-800 font-semibold px-2 py-1 rounded-md hover:bg-sky-100"
+                    className="shrink-0 text-xs text-sky-600 hover:text-sky-800 font-semibold px-2 py-1 rounded-md hover:bg-sky-100 self-start"
                   >
                     Mark read
                   </button>
