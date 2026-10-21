@@ -1,0 +1,101 @@
+import { Website, WebsiteCreatePayload, Opportunity, ScrapeRun, Activity } from '../types';
+
+// In production on Vercel, set VITE_API_BASE_URL=https://your-backend.onrender.com
+// In local development, leave unset to use Vite's proxy (/api -> http://127.0.0.1:8000)
+const rawApiBase = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '');
+const API_BASE = rawApiBase
+  ? (rawApiBase.endsWith('/api') ? rawApiBase : `${rawApiBase}/api`)
+  : '/api';
+
+export async function fetchWebsites(): Promise<Website[]> {
+  const res = await fetch(`${API_BASE}/websites`);
+  if (!res.ok) throw new Error('Failed to fetch websites');
+  return res.json();
+}
+
+export async function createWebsite(payload: WebsiteCreatePayload): Promise<Website> {
+  const res = await fetch(`${API_BASE}/websites`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: 'Failed to create website' }));
+    throw new Error(errorData.detail || 'Failed to create website');
+  }
+  return res.json();
+}
+
+export async function deleteWebsite(id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/websites/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete website');
+}
+
+export async function triggerScrape(websiteId: number): Promise<ScrapeRun> {
+  const res = await fetch(`${API_BASE}/websites/${websiteId}/scrape`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to trigger scrape');
+  return res.json();
+}
+
+export async function fetchOpportunities(params?: {
+  q?: string;
+  status?: string;
+  website_id?: number;
+  sort_by?: string;
+}): Promise<Opportunity[]> {
+  const base = API_BASE.startsWith('http://') || API_BASE.startsWith('https://')
+    ? API_BASE
+    : `${window.location.origin}${API_BASE}`;
+  const url = new URL(`${base}/opportunities`);
+  if (params?.q) url.searchParams.append('q', params.q);
+  if (params?.status) url.searchParams.append('status', params.status);
+  if (params?.website_id) url.searchParams.append('website_id', params.website_id.toString());
+  if (params?.sort_by) url.searchParams.append('sort_by', params.sort_by);
+
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error('Failed to fetch opportunities');
+  return res.json();
+}
+
+export async function fetchOpportunityDetails(id: number): Promise<Opportunity> {
+  const res = await fetch(`${API_BASE}/opportunities/${id}`);
+  if (!res.ok) throw new Error('Failed to fetch opportunity details');
+  return res.json();
+}
+
+export async function refreshOpportunity(id: number): Promise<ScrapeRun> {
+  const res = await fetch(`${API_BASE}/opportunities/${id}/refresh`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to refresh opportunity');
+  return res.json();
+}
+
+export async function fetchScrapeRuns(): Promise<ScrapeRun[]> {
+  const res = await fetch(`${API_BASE}/scrape-runs`);
+  if (!res.ok) throw new Error('Failed to fetch scraping history');
+  return res.json();
+}
+
+export async function fetchActivities(unreadOnly = false): Promise<Activity[]> {
+  const res = await fetch(`${API_BASE}/activities?unread_only=${unreadOnly}`);
+  if (!res.ok) throw new Error('Failed to fetch in-website activities');
+  return res.json();
+}
+
+export async function markActivityRead(id: number): Promise<Activity> {
+  const res = await fetch(`${API_BASE}/activities/${id}/read`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ is_read: true }),
+  });
+  if (!res.ok) throw new Error('Failed to mark notification as read');
+  return res.json();
+}
+
+export async function markAllActivitiesRead(): Promise<void> {
+  const res = await fetch(`${API_BASE}/activities/read-all`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to mark all notifications as read');
+}
+
+export function getExportUrl(format: 'csv' | 'excel' = 'csv'): string {
+  return `${API_BASE}/opportunities/export?format=${format}`;
+}

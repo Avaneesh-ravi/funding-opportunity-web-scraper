@@ -1,0 +1,29 @@
+# Render Blueprint Specification
+# See: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: funding-tracker-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: starter
+    # Persistent disk for SQLite (Starter plan or higher on Render)
+    disk:
+      name: sqlite-data
+      mountPath: /opt/render/project/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        value: "sqlite:////opt/render/project/data/dashboard.db"
+      - key: CORS_ORIGINS_STR
+        value: "http://localhost:5173"
+      - key: TIMEZONE
+        value: "Asia/Kolkata"
+      - key: SCRAPER_TIMEOUT
+        value: "30"
