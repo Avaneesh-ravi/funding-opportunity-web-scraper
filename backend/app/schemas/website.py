@@ -4,7 +4,7 @@ from pydantic import BaseModel, HttpUrl, Field
 
 class WebsiteBase(BaseModel):
     name: str = Field(..., example="Board of Research in Nuclear Sciences (BRNS)")
-    base_url: str = Field(..., example="https://brns.res.in")
+    base_url: Optional[str] = Field(None, example="https://brns.res.in")
     target_url: str = Field(..., example="https://brns.res.in/content_details.php?content_id=69")
     category: Optional[str] = "Research Grants"
     description: Optional[str] = None

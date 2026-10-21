@@ -7,9 +7,38 @@ const API_BASE = rawApiBase
   ? (rawApiBase.endsWith('/api') ? rawApiBase : `${rawApiBase}/api`)
   : '/api';
 
+// Helper to extract clean error message string from FastAPI responses
+export function extractErrorMessage(errorData: any, fallback: string): string {
+  if (!errorData) return fallback;
+  if (typeof errorData === 'string') return errorData;
+  if (typeof errorData.detail === 'string') return errorData.detail;
+  if (Array.isArray(errorData.detail)) {
+    return errorData.detail
+      .map((item: any) => {
+        if (typeof item === 'string') return item;
+        if (item?.msg) {
+          const field = Array.isArray(item.loc)
+            ? item.loc.filter((p: any) => p !== 'body').join('.')
+            : '';
+          return field ? `${field}: ${item.msg}` : item.msg;
+        }
+        return JSON.stringify(item);
+      })
+      .join('; ');
+  }
+  if (typeof errorData.detail === 'object' && errorData.detail !== null) {
+    return JSON.stringify(errorData.detail);
+  }
+  if (typeof errorData.message === 'string') return errorData.message;
+  return fallback;
+}
+
 export async function fetchWebsites(): Promise<Website[]> {
   const res = await fetch(`${API_BASE}/websites`);
-  if (!res.ok) throw new Error('Failed to fetch websites');
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(extractErrorMessage(errorData, 'Failed to fetch websites'));
+  }
   return res.json();
 }
 
@@ -20,20 +49,26 @@ export async function createWebsite(payload: WebsiteCreatePayload): Promise<Webs
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ detail: 'Failed to create website' }));
-    throw new Error(errorData.detail || 'Failed to create website');
+    const errorData = await res.json().catch(() => null);
+    throw new Error(extractErrorMessage(errorData, 'Failed to create website'));
   }
   return res.json();
 }
 
 export async function deleteWebsite(id: number): Promise<void> {
   const res = await fetch(`${API_BASE}/websites/${id}`, { method: 'DELETE' });
-  if (!res.ok) throw new Error('Failed to delete website');
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(extractErrorMessage(errorData, 'Failed to delete website'));
+  }
 }
 
 export async function triggerScrape(websiteId: number): Promise<ScrapeRun> {
   const res = await fetch(`${API_BASE}/websites/${websiteId}/scrape`, { method: 'POST' });
-  if (!res.ok) throw new Error('Failed to trigger scrape');
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(extractErrorMessage(errorData, 'Failed to trigger scrape'));
+  }
   return res.json();
 }
 

@@ -125,3 +125,18 @@ def test_scraper_manager_unsupported_urls():
         assert scraper_manager.get_scraper_type(url) == "generic", f"Should be generic for {url}"
         scraper = scraper_manager.get_scraper(url)
         assert isinstance(scraper, GenericScraper), f"Should return GenericScraper for {url}"
+
+
+def test_create_website_without_base_url():
+    import uuid
+    uid = str(uuid.uuid4())[:8]
+    payload = {
+        "name": f"Portal Without Base URL {uid}",
+        "target_url": f"https://example.org/portal-{uid}",
+        "category": "Fellowships"
+    }
+    res = client.post("/api/websites", json=payload)
+    assert res.status_code == 201
+    data = res.json()
+    assert data["base_url"] == "https://example.org"
+    assert data["target_url"] == f"https://example.org/portal-{uid}"

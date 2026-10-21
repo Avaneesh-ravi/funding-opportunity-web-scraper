@@ -92,9 +92,15 @@ export function App() {
   };
 
   const handleAddWebsite = async (payload: WebsiteCreatePayload) => {
-    const newSite = await createWebsite(payload);
-    showToast(`Website "${newSite.name}" registered successfully.`, 'success');
-    await loadAllData();
+    try {
+      const newSite = await createWebsite(payload);
+      showToast(`Website "${newSite.name}" registered successfully.`, 'success');
+      await loadAllData();
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to register website.';
+      showToast(msg, 'error');
+      throw err;
+    }
   };
 
   const handleDeleteWebsite = async (siteId: number) => {

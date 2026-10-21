@@ -43,8 +43,12 @@ export const AddUrlModal: React.FC<AddUrlModalProps> = ({ isOpen, onClose, onSub
 
     setIsSubmitting(true);
     try {
+      const parsedUrl = new URL(targetUrl.trim());
+      const derivedBaseUrl = `${parsedUrl.protocol}//${parsedUrl.host}`;
+
       await onSubmit({
         name: name.trim() || targetUrl.trim(),
+        base_url: derivedBaseUrl,
         target_url: targetUrl.trim(),
         category,
         description: description.trim() || undefined,
@@ -57,7 +61,12 @@ export const AddUrlModal: React.FC<AddUrlModalProps> = ({ isOpen, onClose, onSub
       setDescription('');
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to add URL');
+      const msg = typeof err === 'string'
+        ? err
+        : (err?.message && err.message !== '[object Object]')
+          ? err.message
+          : (typeof err?.detail === 'string' ? err.detail : 'Failed to register website URL');
+      setError(msg);
     } finally {
       setIsSubmitting(false);
     }
