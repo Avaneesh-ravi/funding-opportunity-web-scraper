@@ -12,6 +12,7 @@ from app.scrapers.universal_engine.metadata_extractor import extract_html_metada
 from app.scrapers.universal_engine.opportunity_classifier import (
     calculate_opportunity_confidence,
     infer_funding_agency,
+    infer_record_category,
     extract_opportunities_from_table
 )
 from app.scrapers.universal_engine.browser_fallback import is_spa_shell
@@ -304,3 +305,139 @@ def test_flexible_date_parsing():
     ann, dl = extract_dates_from_text("Announced on: 01-Oct-2026. Last Date of submission: 15-Nov-2026 upto 5:00 PM.")
     assert ann is not None and ann.day == 1 and ann.month == 10
     assert dl is not None and dl.day == 15 and dl.month == 11
+
+
+# ── 10. Test Category Inference ────────────────────────────────────────────────
+
+def test_infer_record_category_types():
+    assert infer_record_category("Public Consultation on Draft SHANTI Rules") == "Public Consultation"
+    assert infer_record_category("Call for Proposals - Research Schemes") == "Research Grants"
+    assert infer_record_category("Notice Inviting Tender for Lab Equipment") == "Tenders & Solicitations"
+    assert infer_record_category("Advisory Notification on Radiation Standards") == "Government Notice"
+    assert infer_record_category("Standard Generic Opportunity") == "Research Announcement"
+
+
+# ── 11. Test Public Consultation & Time-Prefixed Deadline Extraction ──────────
+
+def test_public_consultation_extraction_and_time_prefix_deadline():
+    dae_html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Public Consultation on Draft SHANTI Rules and Draft SHANTI Regulations - DAE</title>
+    </head>
+    <body>
+        <h1>Public Consultation on Draft SHANTI Rules and Draft SHANTI Regulations</h1>
+        <p>The Department of Atomic Energy (DAE) invites comments and suggestions on the draft SHANTI Rules and Regulations.</p>
+        <p>Deadline for submission of comments/suggestions is 8:00 PM on 04 September 2026.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No.</th>
+                    <th>Document Title</th>
+                    <th>Download Link</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Draft SHANTI Rules</td>
+                    <td><a href="/public-consultations/files/Draft_SHANTI_Rules.pdf">Download Rules (PDF 2.1 MB)</a></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Draft SHANTI Regulations</td>
+                    <td><a href="/public-consultations/files/Draft_SHANTI_Regulations.pdf">Download Regulations (PDF 1.8 MB)</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </body>
+    </html>
+    """
+    scraper = UniversalScraper()
+    mock_res = SafeResponse(
+        url="https://dae.gov.in/public-consultation-on-draft-shanti-rules-and-draft-shanti-regulations/",
+        status_code=200,
+        content=dae_html.encode("utf-8"),
+        headers={"content-type": "text/html"}
+    )
+
+    with patch.object(scraper.http_client, "fetch", return_value=mock_res):
+        opps = scraper.scrape_all("https://dae.gov.in/public-consultation-on-draft-shanti-rules-and-draft-shanti-regulations/")
+
+    assert len(opps) == 2
+    titles = [o.title for o in opps]
+    assert any("Draft SHANTI Rules" in t for t in titles)
+    assert any("Draft SHANTI Regulations" in t for t in titles)
+    for opp in opps:
+        assert opp.funding_agency == "Department of Atomic Energy (DAE)"
+        assert opp.scheme_name == "Public Consultation"
+        assert opp.current_deadline is not None
+        assert opp.current_deadline.year == 2026
+        assert opp.current_deadline.month == 9
+        assert opp.current_deadline.day == 4
+        assert opp.document_url.endswith(".pdf")
+
+
+# ── 12. Test Multi-Opportunity Persistence Without Suppression ─────────────────
+
+def test_multi_opportunity_persistence_no_suppression():
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.database import Base
+    from app.models.website import Website
+    from app.models.opportunity import Opportunity
+    from app.scrapers.base import ScrapedOpportunity
+    from app.services.scraping_service import execute_website_scrape
+
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db = TestingSessionLocal()
+
+    site = Website(
+        name="DAE",
+        base_url="https://dae.gov.in",
+        target_url="https://dae.gov.in/consultation",
+        category="Public Consultation",
+        scraper_type="universal",
+        enabled=True
+    )
+    db.add(site)
+    db.commit()
+    db.refresh(site)
+
+    mock_opps = [
+        ScrapedOpportunity(
+            title="Draft SHANTI Rules",
+            document_url="https://dae.gov.in/rules.pdf",
+            source_url="https://dae.gov.in/consultation",
+            funding_agency="Department of Atomic Energy (DAE)",
+            scheme_name="Public Consultation"
+        ),
+        ScrapedOpportunity(
+            title="Draft SHANTI Regulations",
+            document_url="https://dae.gov.in/regulations.pdf",
+            source_url="https://dae.gov.in/consultation",
+            funding_agency="Department of Atomic Energy (DAE)",
+            scheme_name="Public Consultation"
+        )
+    ]
+
+    mock_scraper = MagicMock()
+    mock_scraper.scrape.return_value = mock_opps
+
+    with patch("app.services.scraping_service.scraper_manager.get_scraper", return_value=mock_scraper):
+        run = execute_website_scrape(db=db, website_id=site.id)
+
+    assert run.status == "SUCCESS"
+    assert run.records_found == 2
+    assert run.records_created == 2
+
+    persisted = db.query(Opportunity).filter(Opportunity.website_id == site.id).all()
+    assert len(persisted) == 2
+    persisted_titles = [p.title for p in persisted]
+    assert "Draft SHANTI Rules" in persisted_titles
+    assert "Draft SHANTI Regulations" in persisted_titles
+    db.close()
+

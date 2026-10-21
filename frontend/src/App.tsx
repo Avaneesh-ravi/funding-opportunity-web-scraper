@@ -247,6 +247,7 @@ export function App() {
           {currentTab === 'websites' && (
             <Websites
               websites={websites}
+              scrapeRuns={scrapeRuns}
               onAddUrlClick={() => setIsAddUrlOpen(true)}
               onScrapeWebsite={handleScrapeSpecificWebsite}
               onDeleteWebsite={handleDeleteWebsite}

@@ -1,5 +1,6 @@
 from datetime import datetime
 import pytz
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models.website import Website
@@ -53,6 +54,17 @@ def execute_website_scrape(db: Session, website_id: int, reference_now: datetime
         records_updated = 0
         opp_id_for_log = None
 
+        # Synchronize website identity and category dynamically from actual content
+        if records_found > 0 and website.id not in (1, 2):
+            primary_agency = scraped_opps[0].funding_agency
+            primary_scheme = scraped_opps[0].scheme_name
+            if primary_agency and primary_agency not in ("External Portal", "Funding Organization"):
+                if "AERB" in website.name or website.name == website.target_url or "generic" in website.name.lower():
+                    website.name = primary_agency
+            if primary_scheme and (not website.category or website.category in ("Research Grants", "Generic Grants")):
+                website.category = primary_scheme
+            db.commit()
+
         if records_found == 0:
             scrape_run.status = "SUCCESS"
             scrape_run.finished_at = datetime.utcnow()
@@ -74,14 +86,16 @@ def execute_website_scrape(db: Session, website_id: int, reference_now: datetime
             return scrape_run
 
         for scraped_opp in scraped_opps:
-            # Check if opportunity already exists in DB
+            # Check if opportunity already exists in DB using title or document URL, NOT solely source_url
+            match_clauses = [Opportunity.title == scraped_opp.title]
+            if scraped_opp.external_identifier:
+                match_clauses.append(Opportunity.external_identifier == scraped_opp.external_identifier)
+            if scraped_opp.document_url:
+                match_clauses.append(Opportunity.document_url == scraped_opp.document_url)
+
             existing_opp = db.query(Opportunity).filter(
                 Opportunity.website_id == website.id,
-                (
-                    (Opportunity.external_identifier.isnot(None) & (Opportunity.external_identifier == scraped_opp.external_identifier)) | 
-                    (Opportunity.source_url == scraped_opp.source_url) |
-                    (Opportunity.title == scraped_opp.title)
-                )
+                or_(*match_clauses)
             ).first()
 
             current_status = calculate_deadline_status(

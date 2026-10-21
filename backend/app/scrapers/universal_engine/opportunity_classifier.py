@@ -1,5 +1,6 @@
 import re
 import logging
+from datetime import datetime
 from typing import Optional, List, Dict, Any, Tuple
 from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
@@ -17,6 +18,8 @@ KNOWN_AGENCIES = {
     "brns.res.in": "Board of Research in Nuclear Sciences (BRNS)",
     "dst.gov.in": "Department of Science and Technology (DST)",
     "onlinedst.gov.in": "Department of Science and Technology (DST)",
+    "dae.gov.in": "Department of Atomic Energy (DAE)",
+    "aerb.gov.in": "Atomic Energy Regulatory Board (AERB)",
     "dbtindia.gov.in": "Department of Biotechnology (DBT)",
     "icmr.nic.in": "Indian Council of Medical Research (ICMR)",
     "icmr.gov.in": "Indian Council of Medical Research (ICMR)",
@@ -51,7 +54,18 @@ STRONG_GRANT_KEYWORDS = [
     "grants-in-aid",
     "research project",
     "collaborative projects",
-    "quantum mission"
+    "quantum mission",
+    "public consultation",
+    "draft rules",
+    "draft regulations",
+    "consultation on draft",
+    "suggestions and feedback",
+    "comments invited",
+    "seeking comments",
+    "stakeholder consultation",
+    "collaborative research scheme",
+    "research & innovations development schemes",
+    "consultation paper"
 ]
 
 SECONDARY_KEYWORDS = [
@@ -67,12 +81,41 @@ SECONDARY_KEYWORDS = [
     "mission",
     "initiative",
     "proposals",
-    "collaborative"
+    "collaborative",
+    "consultation",
+    "feedback",
+    "suggestions",
+    "stakeholders",
+    "draft",
+    "regulations",
+    "rules",
+    "notice",
+    "tender"
 ]
 
 DISQUALIFYING_PATTERNS = [
     re.compile(r"^(?:privacy\s+policy|terms\s+(?:of\s+service|and\s+conditions)|disclaimer|about\s+us|contact\s+us|sitemap|copyright|sign\s+in|login)$", re.IGNORECASE)
 ]
+
+
+def infer_record_category(title: str, text: str = "") -> str:
+    """
+    Categorizes the extracted opportunity or announcement based on content semantics.
+    """
+    combined = (title + " " + text[:2500]).lower()
+    if any(k in combined for k in ("public consultation", "draft rules", "draft regulations", "consultation paper", "seeking comments", "stakeholder consultation", "draft document", "suggestions and feedback")):
+        return "Public Consultation"
+    elif any(k in combined for k in ("fellowship", "scholarship", "postdoctoral", "doctoral")):
+        return "Fellowship"
+    elif any(k in combined for k in ("tender", "e-tender", "procurement", "expression of interest", "bidding")):
+        return "Tenders & Solicitations"
+    elif any(k in combined for k in ("call for proposals", "call for research", "research grant", "project proposal", "crs", "research project", "grants-in-aid", "grant")):
+        return "Research Grants"
+    elif any(k in combined for k in ("scheme", "capacity building", "development scheme", "initiative")):
+        return "Research & Innovation Schemes"
+    elif any(k in combined for k in ("notice", "notification", "office memorandum", "circular", "order")):
+        return "Government Notice"
+    return "Research Announcement"
 
 
 def infer_funding_agency(url: str, meta_site_name: Optional[str] = None, soup: Optional[BeautifulSoup] = None) -> str:
@@ -88,6 +131,14 @@ def infer_funding_agency(url: str, meta_site_name: Optional[str] = None, soup: O
 
         if meta_site_name and len(meta_site_name.strip()) > 2:
             return meta_site_name.strip()
+
+        # Check title tag segments (e.g. "Draft Rules | Department Of Atomic Energy | India")
+        if soup and soup.title and soup.title.string:
+            title_text = soup.title.string.strip()
+            segments = [s.strip() for s in re.split(r"[|–—-]", title_text) if len(s.strip()) > 3]
+            for seg in segments:
+                if any(w in seg.lower() for w in ("department", "ministry", "council", "board", "authority", "commission", "institute", "university", "centre", "center")):
+                    return seg
 
         # Check logo or banner heading
         if soup:
@@ -142,7 +193,9 @@ def extract_opportunities_from_table(
     table_soup: BeautifulSoup,
     base_url: str,
     agency_name: str,
-    http_client: SafeHttpClient
+    http_client: SafeHttpClient,
+    page_dates: Optional[Tuple[Optional[datetime], Optional[datetime]]] = None,
+    page_category: Optional[str] = None
 ) -> List[ScrapedOpportunity]:
     """
     Extracts distinct funding opportunities from tabular rows (e.g. S.No, Title, Dates, PDF).
@@ -155,7 +208,7 @@ def extract_opportunities_from_table(
     # Inspect headers
     headers = [th.get_text(" ", strip=True).lower() for th in rows[0].find_all(["th", "td"])]
     has_date_col = any("date" in h or "deadline" in h for h in headers)
-    has_title_col = any("title" in h or "name" in h or "scheme" in h or "description" in h or "subject" in h or "call" in h for h in headers)
+    has_title_col = any("title" in h or "name" in h or "scheme" in h or "description" in h or "subject" in h or "call" in h or "document" in h for h in headers)
 
     start_col_idx = None
     deadline_col_idx = None
@@ -165,7 +218,7 @@ def extract_opportunities_from_table(
             deadline_col_idx = idx
         elif any(w in h for w in ("start", "opening", "announced", "issue date", "advertisement")):
             start_col_idx = idx
-        elif any(w in h for w in ("title", "scheme", "call", "project", "subject", "name")):
+        elif any(w in h for w in ("title", "scheme", "call", "project", "subject", "name", "document")):
             if title_col_idx is None:
                 title_col_idx = idx
 
@@ -203,7 +256,16 @@ def extract_opportunities_from_table(
         if not title_cell:
             title_cell = cells[1].get_text(" ", strip=True) if len(cells) > 1 else cells[0].get_text(" ", strip=True)
 
-        if len(title_cell) < 10:
+        # Clean bracketed download/view noise from title
+        title_cell = re.sub(
+            r"\[?\s*(?:view\s*/\s*download|download|view)?\s*\d+(?:\.\d+)?\s*(?:kb|mb)?\s*pdf\s*\]?",
+            "",
+            title_cell,
+            flags=re.IGNORECASE
+        ).strip()
+        title_cell = re.sub(r"[\s\-\–\[\]]+$", "", title_cell).strip()
+
+        if len(title_cell) < 6:
             continue
 
         # Extract dates from explicit date columns if present
@@ -222,10 +284,20 @@ def extract_opportunities_from_table(
             if not deadline_date:
                 deadline_date = d_d
 
+        # Fallback to page-level dates if row doesn't specify its own
+        if not announcement_date and page_dates and page_dates[0]:
+            announcement_date = page_dates[0]
+        if not deadline_date and page_dates and page_dates[1]:
+            deadline_date = page_dates[1]
+
+        row_category = page_category or infer_record_category(title_cell, row_text)
+
         # Check confidence
         conf = calculate_opportunity_confidence(title_cell, row_text, bool(deadline_date), bool(doc_url))
         if has_date_col or has_title_col:
             conf += 0.15
+        if row_category in ("Public Consultation", "Government Notice", "Tenders & Solicitations", "Research Grants"):
+            conf += 0.20
 
         if conf >= 0.35:
             deadline_status = calculate_deadline_status(
@@ -235,6 +307,7 @@ def extract_opportunities_from_table(
             opp = ScrapedOpportunity(
                 title=title_cell[:500],
                 funding_agency=agency_name,
+                scheme_name=row_category,
                 announcement_date=announcement_date,
                 opening_date=announcement_date,
                 original_deadline=deadline_date,
@@ -287,14 +360,23 @@ def extract_single_page_opportunity(
 
     # 3. Find attached document (PDF)
     doc_url = None
+    candidate_pdfs = []
     for a_tag in soup.find_all("a", href=True):
         href = a_tag["href"]
-        if href.lower().endswith(".pdf"):
-            # Check text of link for funding/guidelines keyword
-            link_text = a_tag.get_text(strip=True).lower()
-            doc_url = urljoin(url, href)
-            if any(k in link_text for k in ("call", "guideline", "format", "proposal", "notification", "scheme")):
-                break
+        if href.lower().endswith((".pdf", ".docx", ".doc")):
+            full_pdf_url = urljoin(url, href)
+            link_text = a_tag.get_text(" ", strip=True)
+            p_score = 0
+            lt_lower = link_text.lower()
+            if any(k in lt_lower for k in ("rules", "regulation", "draft", "scheme", "guidelines", "call", "proposal", "format", "notification", "crs")):
+                p_score += 3
+            if any(k in lt_lower for k in ("view", "download", "pdf")):
+                p_score += 1
+            candidate_pdfs.append((p_score, full_pdf_url, link_text))
+
+    if candidate_pdfs:
+        candidate_pdfs.sort(key=lambda x: x[0], reverse=True)
+        doc_url = candidate_pdfs[0][1]
 
     # 4. Extract dates from text and metadata
     announcement_date, deadline_date = extract_dates_from_text(body_text)
@@ -330,10 +412,15 @@ def extract_single_page_opportunity(
         for it in meta_info.get("json_ld_items", [])
     )
 
-    # 7. Confidence verification
+    # 7. Infer Record Category
+    record_category = infer_record_category(title, body_text)
+
+    # 8. Confidence verification
     conf = calculate_opportunity_confidence(title, body_text, bool(deadline_date), bool(doc_url))
     if has_grant_schema:
         conf += 0.35
+    if record_category in ("Public Consultation", "Government Notice", "Tenders & Solicitations", "Research Grants", "Research & Innovation Schemes"):
+        conf += 0.25
 
     if conf < 0.35:
         # Not an actual funding opportunity (e.g. general About page or generic portal home)
@@ -348,7 +435,7 @@ def extract_single_page_opportunity(
     return ScrapedOpportunity(
         title=title[:500],
         funding_agency=agency_name,
-        scheme_name=None,
+        scheme_name=record_category,
         description=body_text[:2000] if body_text else meta_info.get("description"),
         announcement_date=announcement_date,
         opening_date=announcement_date,

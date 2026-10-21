@@ -3,14 +3,18 @@ from typing import List, Optional, Union
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
+import trafilatura
+
 from app.scrapers.base import BaseScraper, ScrapedOpportunity, calculate_deadline_status
 from app.scrapers.universal_engine.http_client import SafeHttpClient, SafeResponse
 from app.scrapers.universal_engine.metadata_extractor import extract_html_metadata, parse_feed_content
 from app.scrapers.universal_engine.document_extractor import extract_pdf_data
 from app.scrapers.universal_engine.browser_fallback import is_spa_shell, render_with_browser_if_available
 from app.scrapers.universal_engine.crawler import discover_relevant_links
+from app.scrapers.universal_engine.date_utils import extract_dates_from_text
 from app.scrapers.universal_engine.opportunity_classifier import (
     infer_funding_agency,
+    infer_record_category,
     extract_opportunities_from_table,
     extract_single_page_opportunity,
     calculate_opportunity_confidence
@@ -135,10 +139,18 @@ class UniversalScraper(BaseScraper):
 
         discovered_opportunities: List[ScrapedOpportunity] = []
 
+        # Extract page-level text, dates, and category
+        body_text = trafilatura.extract(html_content, include_tables=True, include_links=True) or soup.get_text(" ", strip=True)
+        page_dates = extract_dates_from_text(body_text)
+        page_title = meta_info.get("title") or (soup.title.string.strip() if soup.title and soup.title.string else "")
+        page_category = infer_record_category(page_title, body_text)
+
         # ── 6. Strategy A: Tabular Opportunity Listings ─────────────────────
         tables = soup.find_all("table")
         for tbl in tables:
-            tbl_opps = extract_opportunities_from_table(tbl, url, agency_name, self.http_client)
+            tbl_opps = extract_opportunities_from_table(
+                tbl, url, agency_name, self.http_client, page_dates=page_dates, page_category=page_category
+            )
             if tbl_opps:
                 discovered_opportunities.extend(tbl_opps)
 
@@ -149,8 +161,8 @@ class UniversalScraper(BaseScraper):
                 discovered_opportunities.append(single_opp)
 
         # ── 8. Strategy C: Link Discovery & Child Crawling ──────────────────
-        # If we found 0 opportunities (or only 1 generic call from an index), crawl top child links
-        if len(discovered_opportunities) <= 1:
+        # If we found 0 opportunities on the page, crawl top relevant child links
+        if len(discovered_opportunities) == 0:
             child_links = discover_relevant_links(soup, url, max_links=4)
             for child_url, anchor_text in child_links:
                 try:

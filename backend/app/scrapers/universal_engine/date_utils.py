@@ -9,9 +9,10 @@ logger = logging.getLogger(__name__)
 # Precompiled regex patterns for common date expressions in Indian and global research portals
 DEADLINE_PATTERNS = [
     re.compile(
-        r"(?:last\s+date\s*(?:for|of)?\s*(?:submission|receiving|receipt|applying|registration|proposals?)?"
-        r"|submission\s+deadline|closing\s+date|application\s+deadline|due\s+date|valid\s+up\s*to|cut[- ]off\s+date)"
-        r"\s*(?:is|:|-)?\s*"
+        r"(?:last\s+date\s*(?:for|of)?\s*(?:submission(?:\s+of\s+[a-z/]+)?|receiving|receipt|applying|registration|proposals?|comments?|suggestions?|feedback)?"
+        r"|submission\s+deadline|deadline\s+for\s+(?:submission(?:\s+of\s+[a-z/]+)?|suggestions?|feedback|comments?|proposals?)"
+        r"|closing\s+date|application\s+deadline|due\s+date|valid\s+up\s*to|cut[- ]off\s+date|deadline|closing)"
+        r"\s*(?:is|:|-)?\s*(?:(?:\d{1,2}:\d{2}(?::\d{2})?\s*(?:am|pm|hrs|hours)?|\d{1,2}\s*(?:am|pm|hrs|hours))\s*(?:on|by|before|till)?\s*|(?:on|by|before|till)\s+)?"
         r"([0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{2,4}"
         r"|[0-9]{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]+\s+[0-9]{4}"
         r"|[A-Za-z]+\s+[0-9]{1,2}(?:st|nd|rd|th)?,\s*[0-9]{4}"
@@ -19,7 +20,8 @@ DEADLINE_PATTERNS = [
         re.IGNORECASE
     ),
     re.compile(
-        r"(?:deadline|closing)\s*:\s*([0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{2,4}|[A-Za-z]+\s+[0-9]{1,2},\s*[0-9]{4}|[0-9]{1,2}\s+[A-Za-z]+\s+[0-9]{4})",
+        r"(?:deadline|closing)\s*:\s*(?:(?:\d{1,2}:\d{2}(?::\d{2})?\s*(?:am|pm|hrs|hours)?|\d{1,2}\s*(?:am|pm|hrs|hours))\s*(?:on|by|before|till)?\s*|(?:on|by|before|till)\s+)?"
+        r"([0-9]{1,2}[./-][0-9]{1,2}[./-][0-9]{2,4}|[A-Za-z]+\s+[0-9]{1,2},\s*[0-9]{4}|[0-9]{1,2}\s+[A-Za-z]+\s+[0-9]{4})",
         re.IGNORECASE
     )
 ]

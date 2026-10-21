@@ -1,9 +1,10 @@
 import React from 'react';
-import { Globe, Plus, RefreshCw, ExternalLink, Trash2, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
-import { Website } from '../types';
+import { Globe, Plus, RefreshCw, ExternalLink, Trash2, CheckCircle2, ShieldCheck, Sparkles, AlertCircle, AlertTriangle, Info, Clock, Loader2 } from 'lucide-react';
+import { Website, ScrapeRun } from '../types';
 
 interface WebsitesProps {
   websites: Website[];
+  scrapeRuns?: ScrapeRun[];
   onAddUrlClick: () => void;
   onScrapeWebsite: (websiteId: number) => void;
   onDeleteWebsite: (websiteId: number) => void;
@@ -11,10 +12,26 @@ interface WebsitesProps {
 
 export const Websites: React.FC<WebsitesProps> = ({
   websites,
+  scrapeRuns = [],
   onAddUrlClick,
   onScrapeWebsite,
   onDeleteWebsite
 }) => {
+  const formatTimestamp = (dateStr?: string) => {
+    if (!dateStr) return 'Never';
+    try {
+      return new Date(dateStr).toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
   return (
     <div className="space-y-6">
       
@@ -42,6 +59,8 @@ export const Websites: React.FC<WebsitesProps> = ({
       {/* Websites Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {websites.map((site) => {
+          const latestRun = scrapeRuns.find((r) => r.website_id === site.id);
+
           // Check if website has a dedicated specialized scraper (BRNS or DST)
           const scraperType = (site.scraper_type || '').toLowerCase().trim();
           const isDedicatedType = scraperType === 'brns' || scraperType === 'dst';
@@ -105,6 +124,62 @@ export const Websites: React.FC<WebsitesProps> = ({
                 <p className="text-xs text-slate-600 mb-3 line-clamp-2">
                   {site.description || 'Target web page for grant solicitations and PDF announcements.'}
                 </p>
+
+                {/* Real Scrape Status & Timestamp */}
+                <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50/80 rounded-lg border border-slate-200 mb-3 text-xs">
+                  <div>
+                    <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block mb-0.5">Scrape Status</span>
+                    {latestRun?.status === 'RUNNING' && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700">
+                        <Loader2 className="w-3 h-3 animate-spin text-amber-600 shrink-0" />
+                        <span>Running</span>
+                      </span>
+                    )}
+                    {latestRun?.status === 'SUCCESS' && (latestRun.records_found ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                        <span>Completed — Results Found ({latestRun.records_found})</span>
+                      </span>
+                    )}
+                    {latestRun?.status === 'SUCCESS' && (latestRun.records_found ?? 0) === 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600">
+                        <Info className="w-3 h-3 text-slate-500 shrink-0" />
+                        <span>Completed — No Relevant Content</span>
+                      </span>
+                    )}
+                    {latestRun?.status === 'FAILED' && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-rose-700" title={latestRun.error_message || ''}>
+                        <AlertCircle className="w-3 h-3 text-rose-600 shrink-0" />
+                        <span>Fetch Failed</span>
+                      </span>
+                    )}
+                    {latestRun?.status === 'PARTIAL' && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-700">
+                        <AlertTriangle className="w-3 h-3 text-orange-600 shrink-0" />
+                        <span>Partially Completed</span>
+                      </span>
+                    )}
+                    {!latestRun && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400">
+                        <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span>Not Scraped Yet</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block mb-0.5">Last Scraped</span>
+                    <span className="font-medium text-slate-600 text-xs">
+                      {formatTimestamp(latestRun?.finished_at || latestRun?.started_at)}
+                    </span>
+                  </div>
+                </div>
+
+                {latestRun?.status === 'FAILED' && latestRun.error_message && (
+                  <div className="text-[11px] text-rose-700 bg-rose-50/70 p-2 rounded-md border border-rose-200 mb-3 line-clamp-2">
+                    {latestRun.error_message}
+                  </div>
+                )}
 
                 <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 font-mono text-[11px] text-slate-600 break-all mb-4">
                   Target: {site.target_url}

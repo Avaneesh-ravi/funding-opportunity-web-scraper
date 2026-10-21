@@ -18,13 +18,20 @@ def get_websites(db: Session = Depends(get_db)):
     """
     Get list of all configured websites.
     """
-    return db.query(Website).order_by(Website.created_at.desc()).all()
+    websites = db.query(Website).order_by(Website.created_at.desc()).all()
+    # Correct any legacy misnamed websites in database (e.g. DAE URL registered under AERB)
+    for site in websites:
+        if "dae.gov.in" in (site.target_url or "") and "AERB" in (site.name or ""):
+            site.name = "Department of Atomic Energy (DAE)"
+            site.category = "Public Consultation"
+            db.commit()
+    return websites
 
 
 @router.post("", response_model=WebsiteResponse, status_code=status.HTTP_201_CREATED)
 def create_website(website_in: WebsiteCreate, db: Session = Depends(get_db)):
     """
-    Register a new website URL with SSRF security validation.
+    Register a new website URL with SSRF security validation and trigger initial scrape.
     """
     # 1. SSRF and URL validation
     validate_url_security(website_in.target_url)
@@ -43,11 +50,30 @@ def create_website(website_in: WebsiteCreate, db: Session = Depends(get_db)):
     parsed = urlparse(website_in.target_url)
     base_url = f"{parsed.scheme}://{parsed.netloc}"
 
+    name = website_in.name
+    category = website_in.category or "Research Grants"
+
+    # Auto-detect real agency and category from content/domain
+    try:
+        from app.scrapers.universal_engine.opportunity_classifier import infer_funding_agency
+        agency = infer_funding_agency(website_in.target_url)
+        if agency and agency not in ("External Portal", "Funding Organization"):
+            if not name or name == website_in.target_url or "generic" in name.lower() or "aerb" in name.lower():
+                name = agency
+        if "dae.gov.in" in website_in.target_url:
+            name = "Department of Atomic Energy (DAE)"
+            category = "Public Consultation"
+        elif "aicte-india.org" in website_in.target_url:
+            name = "All India Council for Technical Education (AICTE)"
+            category = "Research Grants"
+    except Exception:
+        pass
+
     new_website = Website(
-        name=website_in.name,
+        name=name,
         base_url=website_in.base_url or base_url,
         target_url=website_in.target_url,
-        category=website_in.category or "Research Grants",
+        category=category,
         description=website_in.description,
         scraper_type=scraper_type,
         enabled=website_in.enabled
@@ -55,6 +81,14 @@ def create_website(website_in: WebsiteCreate, db: Session = Depends(get_db)):
     db.add(new_website)
     db.commit()
     db.refresh(new_website)
+
+    # 4. Automatically trigger initial scrape so records appear immediately
+    try:
+        execute_website_scrape(db, new_website.id)
+        db.refresh(new_website)
+    except Exception:
+        pass
+
     return new_website
 
 

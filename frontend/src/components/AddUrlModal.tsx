@@ -125,12 +125,11 @@ export const AddUrlModal: React.FC<AddUrlModalProps> = ({ isOpen, onClose, onSub
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-              Website Name *
+              Website / Portal Name
             </label>
             <input
               type="text"
-              required
-              placeholder="e.g. Science & Engineering Research Board (SERB)"
+              placeholder="Leave blank to auto-detect from website, or enter custom name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:outline-hidden text-xs sm:text-sm"
@@ -149,8 +148,8 @@ export const AddUrlModal: React.FC<AddUrlModalProps> = ({ isOpen, onClose, onSub
               onChange={(e) => setTargetUrl(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:outline-hidden text-xs sm:text-sm"
             />
-            <p className="text-[11px] text-slate-400 mt-1 leading-normal">
-              For new domain URLs, system will display "Scraper not configured" until a site-specific scraper is implemented.
+            <p className="text-[11px] text-sky-600 mt-1 leading-normal font-medium">
+              The universal adaptive engine will immediately scrape, classify, and save all discovered calls, consultations, and document links.
             </p>
           </div>
 
@@ -165,9 +164,11 @@ export const AddUrlModal: React.FC<AddUrlModalProps> = ({ isOpen, onClose, onSub
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:outline-hidden text-xs sm:text-sm"
               >
                 <option value="Research Grants">Research Grants</option>
+                <option value="Public Consultation">Public Consultation</option>
+                <option value="Government Notice">Government Notice</option>
                 <option value="Fellowships">Fellowships</option>
-                <option value="Symposium & Conferences">Symposium & Conferences</option>
-                <option value="Nuclear Sciences">Nuclear Sciences</option>
+                <option value="Tenders & Solicitations">Tenders & Solicitations</option>
+                <option value="Institutional & Research Schemes">Institutional & Research Schemes</option>
                 <option value="General Funding">General Funding</option>
               </select>
             </div>
