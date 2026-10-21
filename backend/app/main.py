@@ -110,7 +110,11 @@ def seed_default_websites():
 
 def _seed_if_missing(db, *, target_url, name, base_url, category, description, scraper_type):
     exists = db.query(Website).filter(Website.target_url == target_url).first()
-    if not exists:
+    if exists:
+        if exists.scraper_type != scraper_type:
+            exists.scraper_type = scraper_type
+            logger.info("Updated scraper_type to %s for website: %s", scraper_type, name)
+    else:
         db.add(Website(
             name=name,
             base_url=base_url,

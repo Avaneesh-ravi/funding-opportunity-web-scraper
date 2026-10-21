@@ -33,7 +33,11 @@ def execute_website_scrape(db: Session, website_id: int, reference_now: datetime
     db.refresh(scrape_run)
 
     try:
-        scraper = scraper_manager.get_scraper(website.target_url)
+        scraper = scraper_manager.get_scraper(
+            target_url_or_type=website.target_url,
+            scraper_type=website.scraper_type,
+            website_id=website.id
+        )
         
         # Will raise ScraperNotConfiguredError for unsupported domains
         scraped_opp = scraper.scrape(website.target_url)

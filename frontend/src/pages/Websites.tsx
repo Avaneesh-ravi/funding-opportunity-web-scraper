@@ -42,7 +42,37 @@ export const Websites: React.FC<WebsitesProps> = ({
       {/* Websites Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {websites.map((site) => {
-          const isBRNS = site.scraper_type === 'brns';
+          // Check if website has a registered site-specific supported scraper (BRNS or DST)
+          const scraperType = (site.scraper_type || '').toLowerCase().trim();
+          const isSupportedType = scraperType === 'brns' || scraperType === 'dst';
+          
+          // Domain / canonical URL verification
+          let isSupportedDomain = false;
+          try {
+            const rawUrl = site.target_url.startsWith('http://') || site.target_url.startsWith('https://')
+              ? site.target_url
+              : `https://${site.target_url}`;
+            const hostname = new URL(rawUrl).hostname.toLowerCase();
+            isSupportedDomain =
+              hostname === 'brns.res.in' ||
+              hostname.endsWith('.brns.res.in') ||
+              hostname === 'dst.gov.in' ||
+              hostname.endsWith('.dst.gov.in') ||
+              hostname === 'onlinedst.gov.in' ||
+              hostname.endsWith('.onlinedst.gov.in');
+          } catch {
+            const targetLower = (site.target_url || '').toLowerCase();
+            isSupportedDomain =
+              targetLower.includes('brns.res.in') ||
+              targetLower.includes('dst.gov.in') ||
+              targetLower.includes('onlinedst.gov.in');
+          }
+
+          // System seeded IDs: 1 = BRNS, 2 = DST
+          const isSystemPortal = site.id === 1 || site.id === 2;
+          const isSupported = isSupportedType || isSupportedDomain || isSystemPortal;
+          const canDelete = !isSystemPortal;
+
           return (
             <div
               key={site.id}
@@ -57,7 +87,7 @@ export const Websites: React.FC<WebsitesProps> = ({
                     </span>
                   </div>
 
-                  {isBRNS ? (
+                  {isSupported ? (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                       <span>Supported Scraper</span>
@@ -100,7 +130,7 @@ export const Websites: React.FC<WebsitesProps> = ({
                     <span>Scrape Now</span>
                   </button>
 
-                  {!isBRNS && (
+                  {canDelete && (
                     <button
                       onClick={() => onDeleteWebsite(site.id)}
                       title="Remove Website"

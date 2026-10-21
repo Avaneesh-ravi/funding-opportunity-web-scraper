@@ -51,3 +51,77 @@ def test_add_unsupported_url_and_scrape():
     scrape_data = scrape_res.json()
     assert scrape_data["status"] == "FAILED"
     assert "scraper not configured" in scrape_data["error_message"].lower()
+
+
+def test_get_websites_contains_dst():
+    response = client.get("/api/websites")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 2
+    dst_site = next((w for w in data if "onlinedst.gov.in" in w["target_url"] or w.get("scraper_type") == "dst"), None)
+    assert dst_site is not None
+    assert dst_site["scraper_type"] == "dst"
+    assert "dst" in dst_site["target_url"].lower()
+
+
+def test_scraper_manager_dst_variations():
+    from app.scrapers.scraper_manager import scraper_manager
+    from app.scrapers.dst_scraper import DSTScraper
+
+    # Various DST URL representations & keys
+    variations = [
+        "https://onlinedst.gov.in/Projectproposalformat.aspx?Id=2232",
+        "http://onlinedst.gov.in/Projectproposalformat.aspx?Id=2232",
+        "https://ONLINEDST.GOV.IN/Projectproposalformat.aspx?Id=2232",
+        "https://dst.gov.in/whats-new",
+        "http://dst.gov.in/",
+        "onlinedst.gov.in",
+        "dst.gov.in",
+        "dst",
+        "dst_scraper",
+        2,  # Seeded website ID
+        "2",
+    ]
+
+    for var in variations:
+        assert scraper_manager.get_scraper_type(var) == "dst", f"Failed for {var}"
+        scraper = scraper_manager.get_scraper(var)
+        assert isinstance(scraper, DSTScraper), f"Failed scraper instance for {var}"
+
+
+def test_scraper_manager_brns_variations():
+    from app.scrapers.scraper_manager import scraper_manager
+    from app.scrapers.brns_scraper import BRNSScraper
+
+    variations = [
+        "https://brns.res.in/content_details.php?content_id=69",
+        "http://BRNS.RES.IN/index.php",
+        "brns.res.in",
+        "brns",
+        "brns_scraper",
+        1,  # Seeded website ID
+        "1",
+    ]
+
+    for var in variations:
+        assert scraper_manager.get_scraper_type(var) == "brns", f"Failed for {var}"
+        scraper = scraper_manager.get_scraper(var)
+        assert isinstance(scraper, BRNSScraper), f"Failed scraper instance for {var}"
+
+
+def test_scraper_manager_unsupported_urls():
+    from app.scrapers.scraper_manager import scraper_manager
+    from app.scrapers.generic_scraper import GenericScraper
+
+    # URLs that contain "dst" as a substring in words but are NOT DST domains
+    tricky_urls = [
+        "https://example.com/research-grants",
+        "https://university.edu/podcast-series",
+        "https://industry.gov.in/funds",
+        "https://example.com/dst-fake",
+    ]
+
+    for url in tricky_urls:
+        assert scraper_manager.get_scraper_type(url) == "generic", f"Should be generic for {url}"
+        scraper = scraper_manager.get_scraper(url)
+        assert isinstance(scraper, GenericScraper), f"Should return GenericScraper for {url}"
