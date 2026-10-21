@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, Plus, RefreshCw, ExternalLink, Trash2, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Globe, Plus, RefreshCw, ExternalLink, Trash2, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
 import { Website } from '../types';
 
 interface WebsitesProps {
@@ -26,7 +26,7 @@ export const Websites: React.FC<WebsitesProps> = ({
             <span>Configured Website Sources</span>
           </h3>
           <p className="text-xs text-slate-500">
-            Registered portals and target URLs monitored by the scraping system.
+            Registered portals monitored by dedicated site scrapers and the universal adaptive scraping engine.
           </p>
         </div>
 
@@ -42,18 +42,18 @@ export const Websites: React.FC<WebsitesProps> = ({
       {/* Websites Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {websites.map((site) => {
-          // Check if website has a registered site-specific supported scraper (BRNS or DST)
+          // Check if website has a dedicated specialized scraper (BRNS or DST)
           const scraperType = (site.scraper_type || '').toLowerCase().trim();
-          const isSupportedType = scraperType === 'brns' || scraperType === 'dst';
+          const isDedicatedType = scraperType === 'brns' || scraperType === 'dst';
           
           // Domain / canonical URL verification
-          let isSupportedDomain = false;
+          let isDedicatedDomain = false;
           try {
             const rawUrl = site.target_url.startsWith('http://') || site.target_url.startsWith('https://')
               ? site.target_url
               : `https://${site.target_url}`;
             const hostname = new URL(rawUrl).hostname.toLowerCase();
-            isSupportedDomain =
+            isDedicatedDomain =
               hostname === 'brns.res.in' ||
               hostname.endsWith('.brns.res.in') ||
               hostname === 'dst.gov.in' ||
@@ -62,7 +62,7 @@ export const Websites: React.FC<WebsitesProps> = ({
               hostname.endsWith('.onlinedst.gov.in');
           } catch {
             const targetLower = (site.target_url || '').toLowerCase();
-            isSupportedDomain =
+            isDedicatedDomain =
               targetLower.includes('brns.res.in') ||
               targetLower.includes('dst.gov.in') ||
               targetLower.includes('onlinedst.gov.in');
@@ -70,7 +70,7 @@ export const Websites: React.FC<WebsitesProps> = ({
 
           // System seeded IDs: 1 = BRNS, 2 = DST
           const isSystemPortal = site.id === 1 || site.id === 2;
-          const isSupported = isSupportedType || isSupportedDomain || isSystemPortal;
+          const isDedicated = isDedicatedType || isDedicatedDomain || isSystemPortal;
           const canDelete = !isSystemPortal;
 
           return (
@@ -88,15 +88,15 @@ export const Websites: React.FC<WebsitesProps> = ({
                   </div>
 
                   <div className="self-start">
-                    {isSupported ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>Supported Scraper</span>
+                    {isDedicated ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap" title="High-precision domain-specific scraper active">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>Dedicated Scraper</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                        <span>Scraper Not Configured</span>
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap" title="Universal adaptive scraping engine active">
+                        <Sparkles className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                        <span>Universal Engine (Active)</span>
                       </span>
                     )}
                   </div>

@@ -144,10 +144,19 @@ def validate_redirect_url(target_url: str, base_url: str) -> str:
     return resolved
 
 
+_NAT64_PREFIX = ipaddress.ip_network("64:ff9b::/96")
+
+
 def _assert_not_private(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> None:
     """
     Ensures an IP address is not private, loopback, link-local, multicast, or in blocked networks.
+    Supports RFC-6052 NAT64 Well-Known Prefix (64:ff9b::/96) by validating embedded IPv4.
     """
+    if ip.version == 6 and ip in _NAT64_PREFIX:
+        embedded_ipv4 = ipaddress.IPv4Address(ip.packed[-4:])
+        _assert_not_private(embedded_ipv4)
+        return
+
     if (
         ip.is_private
         or ip.is_loopback

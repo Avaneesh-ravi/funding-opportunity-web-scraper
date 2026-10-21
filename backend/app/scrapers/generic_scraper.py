@@ -1,9 +1,15 @@
+from typing import Union, List
 from app.scrapers.base import BaseScraper, ScrapedOpportunity
 
 class ScraperNotConfiguredError(Exception):
-    """Raised when a website URL does not have a configured scraper implementation."""
+    """Legacy exception preserved for backwards compatibility."""
     pass
 
-class GenericScraper(BaseScraper):
-    def scrape(self, target_url: str) -> ScrapedOpportunity:
-        raise ScraperNotConfiguredError(f"Scraper not configured for target URL: {target_url}")
+from app.scrapers.universal_engine.universal_scraper import UniversalScraper
+
+class GenericScraper(UniversalScraper):
+    """
+    Generic scraper now backed by the Universal Adaptive Scraping Engine.
+    Handles any arbitrary validated URL without requiring domain-specific scrapers.
+    """
+    pass

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, date
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union, List
 import pytz
 
 @dataclass
@@ -83,8 +83,8 @@ def calculate_deadline_status(
 
 class BaseScraper(ABC):
     @abstractmethod
-    def scrape(self, target_url: str) -> ScrapedOpportunity:
+    def scrape(self, target_url: str) -> Union[ScrapedOpportunity, List[ScrapedOpportunity]]:
         """
-        Scrape target URL and return a normalized ScrapedOpportunity instance.
+        Scrape target URL and return a normalized ScrapedOpportunity instance or list of instances.
         """
         pass

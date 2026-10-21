@@ -3,7 +3,6 @@ from urllib.parse import urlparse
 from app.scrapers.base import BaseScraper
 from app.scrapers.brns_scraper import BRNSScraper
 from app.scrapers.dst_scraper import DSTScraper
-from app.scrapers.generic_scraper import GenericScraper
 
 
 class ScraperManager:
@@ -94,15 +93,32 @@ class ScraperManager:
 
         return False
 
+    def is_dedicated_scraper(self, target_url_or_type_or_id: Union[str, int, None]) -> bool:
+        """
+        Determines whether a given identifier or URL has a site-specific dedicated scraper (BRNS or DST).
+        """
+        return self.is_brns_target(target_url_or_type_or_id) or self.is_dst_target(target_url_or_type_or_id)
+
+    def is_supported_scraper(self, target_url_or_type_or_id: Union[str, int, None]) -> bool:
+        """
+        All valid URLs are supported either via site-specific scrapers (BRNS, DST)
+        or via the Universal Adaptive Web Scraping Engine.
+        """
+        return True
+
     def get_scraper_type(self, target_url_or_type_or_id: Union[str, int, None]) -> str:
         """
-        Determines the scraper type identifier ("brns", "dst", or "generic")
+        Determines the scraper type identifier ("brns", "dst", "universal", or "generic")
         for a given URL, scraper key, or registered website ID.
         """
         if self.is_brns_target(target_url_or_type_or_id):
             return "brns"
         elif self.is_dst_target(target_url_or_type_or_id):
             return "dst"
+        
+        val = str(target_url_or_type_or_id).lower().strip() if target_url_or_type_or_id else ""
+        if val in ("universal", "universal_scraper", "universal_engine"):
+            return "universal"
         return "generic"
 
     def get_scraper(
@@ -114,6 +130,7 @@ class ScraperManager:
         """
         Returns the appropriate scraper instance for the given target URL,
         scraper type, or registered website ID.
+        Falls back to the Universal Adaptive Engine (GenericScraper) for all arbitrary URLs.
         """
         # 1. Check explicit scraper_type if provided
         if scraper_type:
@@ -138,6 +155,7 @@ class ScraperManager:
         elif stype == "dst":
             return DSTScraper()
 
+        from app.scrapers.generic_scraper import GenericScraper
         return GenericScraper()
 
 
